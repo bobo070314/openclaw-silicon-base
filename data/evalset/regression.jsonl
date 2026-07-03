@@ -1,0 +1,5 @@
+{"id":"reg-001","input":"网关端口是多少","expected_type":"config_query","tags":["gateway"],"must_include":["18900"]}
+{"id":"reg-002","input":"列出所有配置的 provider","expected_type":"config_query","tags":["config","provider"],"must_include":["deepseek","zhipu"]}
+{"id":"reg-003","input":"今天的日期是什么","expected_type":"info","tags":["date"],"must_not_include":["null","undefined"]}
+{"id":"reg-004","input":"1+1 等于几","expected_type":"math","tags":["basic"],"must_include":["2"]}
+{"id":"reg-005","input":"什么是 HTTP 401","expected_type":"explain","tags":["auth","http"],"must_include":["unauthorized"]}

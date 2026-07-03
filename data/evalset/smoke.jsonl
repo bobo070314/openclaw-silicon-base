@@ -1,0 +1,5 @@
+{"id":"smoke-001","input":"请定位这个报错的根因","expected_type":"root_cause","tags":["debug","auth"],"must_include":["401","token"]}
+{"id":"smoke-002","input":"给我回滚步骤","expected_type":"runbook","tags":["ops"],"must_include":["rollback","restore"]}
+{"id":"smoke-003","input":"测试 DeepSeek 模型是否在线","expected_type":"health_check","tags":["model","probe"],"must_include":["ok","online"]}
+{"id":"smoke-004","input":"当前配置文件的模型是什么","expected_type":"config_query","tags":["config"],"must_include":["deepseek"]}
+{"id":"smoke-005","input":"帮我写一段 Python 测试代码","expected_type":"code_gen","tags":["coding"],"must_include":["def","print"]}

@@ -1,0 +1,7 @@
+# Cost Budget
+
+daily_token_limit: 3000000
+daily_cost_limit_usd: 120
+max_input_tokens_per_req: 16000
+max_output_tokens_per_req: 3000
+alert_when_remaining_tokens_lt: 50000

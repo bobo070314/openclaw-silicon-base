@@ -1,0 +1,15 @@
+version: "v1.0.0"
+strategy:
+  planner_prompt: "prompts/system/planner.md"
+  debugger_prompt: "prompts/system/debugger.md"
+  tool_policy_prompt: "prompts/tools/tool_policy.md"
+routing:
+  default_model: "deepseek-official/deepseek-chat"
+  fallback_model: "zhipu/glm-4-flash-250315"
+  use_fallback_on:
+    - timeout
+    - provider_5xx
+    - parse_error
+memory:
+  use_long_term_memory: false
+  session_summary: true

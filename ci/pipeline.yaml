@@ -1,0 +1,36 @@
+# Self-Evolve CI Pipeline for GitHub Actions (Windows Runner)
+name: Self-Evolve
+on:
+  schedule: ["0 */6 * * *"]  # 每6小时
+  workflow_dispatch: {}
+
+jobs:
+  evolve:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install requests pyyaml
+      - name: Collect failures
+        run: python scripts/collect_failures.py
+        env:
+          OPENCLAW_GATEWAY_URL: ${{ secrets.OPENCLAW_GATEWAY_URL }}
+          OPENCLAW_API_TOKEN: ${{ secrets.OPENCLAW_API_TOKEN }}
+      - name: Propose candidate
+        run: python scripts/propose_candidate.py
+      - name: Run eval
+        run: python scripts/run_eval.py
+      - name: Gate check
+        run: python scripts/gate_check.py
+      - name: Deploy canary
+        run: powershell scripts/deploy_canary.ps1 -CandidateConfig configs/candidates/latest.yaml
+      - name: Health check
+        run: powershell scripts/healthcheck.ps1 -MetricFile data/runs/latest_eval.json
+      - name: Promote
+        run: powershell scripts/promote.ps1
+      - name: On failure - Rollback
+        if: failure()
+        run: powershell scripts/rollback.ps1

@@ -1,0 +1,23 @@
+safety:
+  block_high_risk_tools: true
+  require_allowlist_tools: true
+  max_tool_calls_per_turn: 8
+
+budget:
+  max_input_tokens_per_req: 16000
+  max_output_tokens_per_req: 3000
+  daily_token_cap: 3000000
+  max_cost_usd_per_day: 120
+
+quality_gates:
+  min_pass_rate: 0.88
+  min_success_delta: 0.02
+  max_latency_p95_ms: 9000
+  max_crash_rate: 0.005
+  max_login_redirect_rate: 0.003   # 重点盯：闪退到登录页
+
+release:
+  canary_traffic: 0.05
+  canary_duration_minutes: 60
+  auto_promote_if_healthy: true
+  auto_rollback_if_unhealthy: true

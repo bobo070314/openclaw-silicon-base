@@ -1,0 +1,9 @@
+# Routing Rules
+
+default_model: "deepseek-official/deepseek-chat"
+fallback_model: "zhipu/glm-4-flash-250315"
+fallback_on:
+  - timeout
+  - provider_5xx
+  - parse_error
+  - auth_401

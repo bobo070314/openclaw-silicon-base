@@ -1,0 +1,14 @@
+# Safety Policy
+
+blocked_tools:
+  - "file_write_to_json"  # 禁止直接修改 JSON 配置
+  - "model_switch"        # 禁止直接切换模型
+allowed_tools:
+  - "read"
+  - "exec"
+  - "web_fetch"
+  - "web_search"
+  - "message"
+require_confirmation_for:
+  - "gateway_restart"
+  - "config_reload"
