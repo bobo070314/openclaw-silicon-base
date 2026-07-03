@@ -1,0 +1,28 @@
+# rbac_policy.yaml - 角色权限配置
+# MVP 版本：简单三角色 + 路径匹配
+# 后续可扩展：动态角色、通配符深度、临时提权
+
+roles:
+  CEO:
+    description: "CEO - 只能调度任务，不能改核心配置"
+    allowed_paths: []
+    blocked_patterns:
+      - "gateway.auth.token"
+      - "models.providers.*.apiKey"
+      - "configs/guardrails.yaml"
+    deny_reason: "CEO 不能修改核心配置，请由 SECURITY 角色操作"
+
+  OPS:
+    description: "运维 - 可改 guardrails，不可改 apiKey"
+    allowed_paths: []
+    blocked_patterns:
+      - "gateway.auth.token"
+      - "models.providers.*.apiKey"
+    deny_reason: "OPS 角色不能修改 apiKey，请由 SECURITY 角色操作"
+
+  SECURITY:
+    description: "安全 - 可改全部核心配置"
+    allowed_paths:
+      - "*"
+    blocked_patterns: []
+    deny_reason: ""
