@@ -1,19 +1,34 @@
-# OpenClaw 自进化 Agent 监控指标
+# 📊 硅基体集团 · 部门成本看板
 
-## 核心指标
-- pass_rate: 评测通过率（目标 ≥ 0.88）
-- success_delta: 相比基线的成功率提升（目标 ≥ +2%）
-- latency_p95_ms: P95 延迟（目标 ≤ 9000ms）
-- crash_rate: 崩溃率（目标 ≤ 0.5%）
-- login_redirect_rate: 闪退到登录页比率（目标 ≤ 0.3%）
-- 401_rate: 401 认证失败比率（目标 ≤ 0.3%）
+## 今日消耗（评测报告自动更新）
 
-## 成本指标
-- daily_token_usage: 日 Token 用量
-- daily_cost_usd: 日费用（美元）
-- remaining_tokens: 剩余预算 Token
+| 部门 | Token 消耗 | 占比 | 预算状态 |
+|------|-----------|------|----------|
+| 🧑‍💻 Coding | `{{cost_by_role.coder}}` | `{{pct_coder}}%` | ✅ |
+| 🔧 Fixer | `{{cost_by_role.fixer}}` | `{{pct_fixer}}%` | ✅ |
+| 💬 Chat | `{{cost_by_role.chat}}` | `{{pct_chat}}%` | ✅ |
+| 🗂 Other | `{{cost_by_role.other}}` | `{{pct_other}}%` | ✅ |
+| **合计** | **`{{total_tokens}}`** | **100%** | **`{{usage_pct}}%` 已用** |
 
-## 护栏指标
-- gate_pass: 门禁是否通过
-- rollback_count: 回滚次数
-- canary_duration: 灰度持续时间
+## 预算配置
+
+| 部门 | 日预算（Token） | 月估算（USD） | 告警阈值 |
+|------|----------------|--------------|-----------|
+| Coding | 50,000 | $3.00 | 80% |
+| Fixer | 30,000 | $1.80 | 80% |
+| Chat | 10,000 | $0.60 | 90% |
+| **总预算** | **50,000** | **$3.00** | **80%** |
+
+## 核心门禁指标
+
+| 指标 | 当前值 | 阈值 | 状态 |
+|------|--------|------|------|
+| pass_rate | `{{pass_rate}}` | >= 0.88 | - |
+| login_redirect_rate | `{{login_redirect_rate}}` | <= 0.003 | - |
+| crash_rate | `{{crash_rate}}` | <= 0.005 | - |
+| p95_latency_ms | `{{p95_latency_ms}}` | <= 9000ms | - |
+
+## 说明
+- Token 数据来自 `data/runs/latest_eval.json` 的 `cost_breakdown` 字段
+- 预算从环境变量 `COST_BUDGET_DAILY` 读取（默认 50000）
+- 当前为模拟数据，对接真实 OpenClaw API 后自动替换

@@ -54,7 +54,9 @@ class Evaluator:
             "login_redirect_count": 0,
             "401_count": 0,
             "cases_with_test_evidence": 0,
-            "cases_missing_test_evidence": 0
+            "cases_missing_test_evidence": 0,
+            "total_tokens": 0,
+            "cost_by_role": {}
         }
 
         require_test_evidence = os.environ.get("REQUIRE_TEST_EVIDENCE", "1") == "1"
@@ -89,6 +91,16 @@ class Evaluator:
             else:
                 metrics["cases_missing_test_evidence"] += 1
 
+            # 统计 Token 消耗
+            tokens = result.get("tokens", 0)
+            if tokens is None:
+                tokens = 0
+            metrics["total_tokens"] += tokens
+            role = result.get("role", "other")
+            if role not in metrics["cost_by_role"]:
+                metrics["cost_by_role"][role] = 0
+            metrics["cost_by_role"][role] += tokens
+
         total = metrics["total_cases"]
         pass_rate = metrics["passed_cases"] / total if total > 0 else 0
         avg_latency = metrics["latency_sum"] / len(metrics["latencies"]) if metrics["latencies"] else 0
@@ -100,6 +112,11 @@ class Evaluator:
         require_test_evidence = os.environ.get("REQUIRE_TEST_EVIDENCE", "1") == "1"
         missing_test_evidence = metrics["cases_missing_test_evidence"]
         has_test_evidence_gate = missing_test_evidence == 0 if require_test_evidence else True
+
+        daily_budget = int(os.environ.get("COST_BUDGET_DAILY", "50000"))
+        total_tokens = metrics["total_tokens"]
+        remaining = max(0, daily_budget - total_tokens)
+        usage_pct = round((total_tokens / daily_budget) * 100, 2) if daily_budget > 0 else 0
 
         return {
             "run_id": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -117,6 +134,13 @@ class Evaluator:
                 "cases_with_test_evidence": metrics["cases_with_test_evidence"],
                 "cases_missing_test_evidence": metrics["cases_missing_test_evidence"],
                 "test_evidence_gate_passed": has_test_evidence_gate
+            },
+            "cost_breakdown": {
+                "total_tokens": total_tokens,
+                "by_role": metrics["cost_by_role"],
+                "budget_daily": daily_budget,
+                "remaining_tokens": remaining,
+                "usage_pct": usage_pct
             }
         }
 
@@ -128,6 +152,13 @@ class Evaluator:
                 "total_cases": 0, "passed_cases": 0, "failed_cases": 0,
                 "pass_rate": 0, "avg_latency_ms": 0, "p95_latency_ms": 0,
                 "login_redirect_rate": 0, "crash_rate": 0, "auth_401_rate": 0
+            },
+            "cost_breakdown": {
+                "total_tokens": 0,
+                "by_role": {},
+                "budget_daily": 50000,
+                "remaining_tokens": 50000,
+                "usage_pct": 0
             }
         }
 

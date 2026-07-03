@@ -39,6 +39,15 @@ class MockAgent:
             response = f"模拟处理成功：{hardcase.get('input', '')[:60]}..."
             passed = True
 
+        # 按角色模拟不同 Token 消耗
+        context = hardcase.get("context", {})
+        if isinstance(context, dict):
+            role = context.get("role", "coder")
+        else:
+            role = "coder"
+        tokens_map = {"coder": 1500, "fixer": 800, "chat": 300}
+        tokens = tokens_map.get(role, 500)
+
         # 仅 HC-401-001 触发 login_redirect
         login_redirect = 1 if hc_id == "HC-401-001" and error == "401" else 0
 
@@ -49,6 +58,8 @@ class MockAgent:
             "latency": latency,
             "passed": passed,
             "login_redirect": login_redirect,
+            "tokens": tokens,
+            "role": role,
             "timestamp": time.time()
         }
 
