@@ -59,6 +59,8 @@ class Evaluator:
             "cost_by_role": {}
         }
 
+        collaboration_chain = []
+
         require_test_evidence = os.environ.get("REQUIRE_TEST_EVIDENCE", "1") == "1"
 
         for case in hardcases:
@@ -101,6 +103,15 @@ class Evaluator:
                 metrics["cost_by_role"][role] = 0
             metrics["cost_by_role"][role] += tokens
 
+            # 记录协作链
+            if result.get("context_passed"):
+                collaboration_chain.append({
+                    "from": result["role"],
+                    "to": result.get("target_role"),
+                    "hc_id": result["hc_id"],
+                    "status": "PASS" if result["passed"] else "FAIL"
+                })
+
         total = metrics["total_cases"]
         pass_rate = metrics["passed_cases"] / total if total > 0 else 0
         avg_latency = metrics["latency_sum"] / len(metrics["latencies"]) if metrics["latencies"] else 0
@@ -141,7 +152,8 @@ class Evaluator:
                 "budget_daily": daily_budget,
                 "remaining_tokens": remaining,
                 "usage_pct": usage_pct
-            }
+            },
+            "collaboration_chain": collaboration_chain
         }
 
     def _empty_report(self) -> Dict:

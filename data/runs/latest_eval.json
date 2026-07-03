@@ -1,5 +1,5 @@
 {
-  "run_id": "2026-07-03T22:22:13Z",
+  "run_id": "2026-07-03T22:30:39Z",
   "suite": "hardcases",
   "summary": {
     "total_cases": 6,
@@ -25,5 +25,6 @@
     "budget_daily": 50000,
     "remaining_tokens": 44300,
     "usage_pct": 11.4
-  }
+  },
+  "collaboration_chain": []
 }

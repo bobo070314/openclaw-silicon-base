@@ -1,0 +1,49 @@
+# agent_chain.yaml - 多 Agent 协作链配置
+# 执行顺序：CEO -> Fixer -> Coder -> Reviewer -> Gate
+
+chain:
+  - role: ceo
+    display_name: CEO
+    description: 拆解任务并分派给对应角色
+    timeout_seconds: 30
+    retry_count: 1
+    next_on_success: fixer
+    next_on_failure: null  # CEO 失败则整链中止
+
+  - role: fixer
+    display_name: Fixer
+    description: 尝试最小修复（诊断 + 补丁）
+    timeout_seconds: 60
+    retry_count: 2
+    next_on_success: coder
+    next_on_failure: coder  # Fixer 失败仍让 Coder 接管实现
+
+  - role: coder
+    display_name: Coder
+    description: 若 Fixer 失败则接管实现，否则执行补丁落地
+    timeout_seconds: 120
+    retry_count: 1
+    next_on_success: reviewer
+    next_on_failure: reviewer  # Coder 失败也送 Reviewer 审核
+
+  - role: reviewer
+    display_name: Reviewer
+    description: 检查测试证据、RBAC 风险、代码规范
+    timeout_seconds: 30
+    retry_count: 1
+    next_on_success: gate
+    next_on_failure: null  # Reviewer 失败则整链中止
+
+  - role: gate
+    display_name: GateKeeper
+    description: 门禁检查（pass_rate、证据、RBAC）
+    timeout_seconds: 15
+    retry_count: 0
+    next_on_success: null  # 最终节点
+    next_on_failure: null  # 触发回滚
+
+# 全局设置
+global:
+  trace_path: data/runs/agent_trace.json
+  max_chain_runtime_seconds: 300
+  step_record_fields: [agent, status, latency_ms, input_summary, output_summary, artifacts]

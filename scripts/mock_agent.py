@@ -45,8 +45,17 @@ class MockAgent:
             role = context.get("role", "coder")
         else:
             role = "coder"
-        tokens_map = {"coder": 1500, "fixer": 800, "chat": 300}
+        tokens_map = {"coder": 1500, "fixer": 800, "chat": 300, "ceo": 200, "reviewer": 500}
         tokens = tokens_map.get(role, 500)
+
+        # 模拟上下文传递（多 Agent 协作链）
+        target_role = None
+        context_passed = False
+        if isinstance(context, dict):
+            target_role = context.get("target_role")
+        if target_role and passed:
+            context_passed = True
+            response = f"{role} 已将任务传递给 {target_role}"
 
         # 仅 HC-401-001 触发 login_redirect
         login_redirect = 1 if hc_id == "HC-401-001" and error == "401" else 0
@@ -60,6 +69,8 @@ class MockAgent:
             "login_redirect": login_redirect,
             "tokens": tokens,
             "role": role,
+            "target_role": target_role,
+            "context_passed": context_passed,
             "timestamp": time.time()
         }
 
