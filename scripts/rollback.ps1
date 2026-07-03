@@ -1,8 +1,13 @@
 param(
-    [string]$LastGood = (Join-Path $PSScriptRoot ".." "configs" "base.yaml")
+    [string]$LastGood = ""
 )
 
-$ACTIVE_CONFIG = Join-Path $PSScriptRoot ".." "configs" "active.yaml"
+$BASE = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrEmpty($LastGood)) {
+    $LastGood = Join-Path $BASE "configs\base.yaml"
+}
+
+$ACTIVE_CONFIG = Join-Path $BASE "configs\active.yaml"
 
 Write-Host "[rollback] Restoring $LastGood -> $ACTIVE_CONFIG"
 Copy-Item -Path $LastGood -Destination $ACTIVE_CONFIG -Force

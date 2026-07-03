@@ -14,7 +14,7 @@ Write-Host "========================================"
 
 # 1. backup config
 Write-Host ""
-Write-Host "[1/5] Backup config..."
+Write-Host "[1/7] Backup config..."
 $BACKUP_DIR = "$BASE_DIR\data\backups"
 if (-not (Test-Path $BACKUP_DIR)) { New-Item -ItemType Directory -Path $BACKUP_DIR -Force | Out-Null }
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -24,14 +24,14 @@ Write-Host " -> backup saved: $backupPath"
 
 # 2. fault injection
 Write-Host ""
-Write-Host "[2/5] Inject faults..."
+Write-Host "[2/7] Inject faults..."
 & "$PSScriptRoot\fault_injector.ps1" -Action inject_401
 & "$PSScriptRoot\fault_injector.ps1" -Action inject_timeout
 & "$PSScriptRoot\fault_injector.ps1" -Action inject_tool_fail
 
 # 3. RBAC permission check
 Write-Host ""
-Write-Host "[3/6] RBAC permission check..."
+Write-Host "[3/7] RBAC permission check..."
 $CHANGED_FILES = "$BASE_DIR\data\runs\changed_files.json"
 if (Test-Path $CHANGED_FILES) {
     $rbacRole = if ($env:RBAC_ROLE) { $env:RBAC_ROLE } else { "CEO" }
@@ -44,12 +44,12 @@ if (Test-Path $CHANGED_FILES) {
 
 # 4. run drill
 Write-Host ""
-Write-Host "[4/6] Run fault drill..."
+Write-Host "[4/7] Run fault drill..."
 & "$PSScriptRoot\run_drill.ps1"
 
 # 5. run eval
 Write-Host ""
-Write-Host "[5/6] Run evaluation..."
+Write-Host "[5/7] Run evaluation..."
 python "$PSScriptRoot\run_eval.py"
 if ($LASTEXITCODE -ne 0) {
     Write-Warning " eval had issues, continuing to gate check..."
@@ -57,9 +57,31 @@ if ($LASTEXITCODE -ne 0) {
 
 # 6. gate check
 Write-Host ""
-Write-Host "[6/6] Gate check..."
+Write-Host "[6/7] Gate check..."
 python "$PSScriptRoot\gate_check.py"
 $gatePassed = $LASTEXITCODE -eq 0
+
+# 7. auto rollback decision
+Write-Host ""
+Write-Host "[7/7] Auto rollback decision..."
+$runId = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+$anyFailed = (-not $permPassed) -or (-not $gatePassed)
+
+if ($anyFailed) {
+    $violations = @()
+    if (-not $permPassed) { $violations += "permission_gate: role blocked" }
+    if (-not $gatePassed) { $violations += "gate_check: quality gate blocked" }
+    $violationsStr = $violations -join ","
+
+    & "$PSScriptRoot\auto_rollback.ps1" `
+        -RunId $runId `
+        -Trigger "pipeline gate FAIL (perm=$permPassed, gate=$gatePassed)" `
+        -ConfigBackup $backupPath `
+        -Violations $violationsStr
+} else {
+    Write-Host "AUTO_ROLLBACK: SKIPPED (all gates passed)"
+    & "$PSScriptRoot\notify.ps1" -ReportPath "" -Mode skip
+}
 
 # cleanup mock logs
 $mockPaths = @(
@@ -75,11 +97,12 @@ Write-Host ""
 Write-Host "========================================"
 if ($permPassed -and $gatePassed) {
     Write-Host " RESULT: ALL PASSED - RBAC + gate check OK"
+    Write-Host " AUTO_ROLLBACK: SKIPPED"
 } else {
-    Write-Host " RESULT: PIPELINE FINISHED"
+    Write-Host " RESULT: PIPELINE FINISHED - rollback executed"
     if (-not $permPassed) { Write-Host " permission_gate: FAIL" }
     if (-not $gatePassed) { Write-Host " gate_check: FAIL" }
-    Write-Host " (this means protection is working)"
+    Write-Host " AUTO_ROLLBACK: EXECUTED"
 }
 Write-Host " Backup: $backupPath"
 Write-Host "========================================"

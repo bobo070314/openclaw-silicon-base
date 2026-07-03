@@ -1,0 +1,21 @@
+# rollback_policy.yaml - 自动回滚策略配置
+
+rollback:
+  enabled: true
+  # 触发回滚的 exit codes
+  trigger_exit_codes:
+    - 1  # gate_check.py / permission_check.py 返回非 0 时触发
+  # 回滚目标：last known good config
+  target: "last_good_config"
+  fallback_config: "configs/base.yaml"
+  
+  # 回滚后操作
+  post_rollback:
+    verify: true                  # 执行 rollback_verify.ps1
+    restart_gateway: false        # 是否重启网关（默认不重启，仅回滚配置）
+    notify: true                  # 发送通知
+  
+  audit:
+    report_dir: "data/runs"
+    report_filename: "rollback_report.json"
+    max_reports: 20               # 保留最近 20 份报告

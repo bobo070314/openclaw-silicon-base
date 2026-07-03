@@ -1,0 +1,10 @@
+﻿{
+    "run_id":  "2026-07-03T21:54:21Z",
+    "verify_status":  "SUCCESS",
+    "timestamp":  "2026-07-03T21:54:21Z",
+    "rollback_status":  "SUCCESS",
+    "pipeline_step":  6,
+    "trigger":  "pipeline gate FAIL (perm=True, gate=False)",
+    "violations":  "gate_check: quality gate blocked",
+    "config_backup":  "D:\\bobo\\openclaw-foreign\\workspace\\openclaw-self-evolve\\data\\backups\\openclaw-minimal.json.20260703_215420.bak"
+}
