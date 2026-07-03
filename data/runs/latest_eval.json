@@ -1,27 +1,29 @@
 {
-  "run_id": "2026-07-03T22:07:47Z",
+  "run_id": "2026-07-03T22:22:13Z",
   "suite": "hardcases",
   "summary": {
-    "total_cases": 4,
-    "passed_cases": 2,
-    "failed_cases": 2,
+    "total_cases": 6,
+    "passed_cases": 3,
+    "failed_cases": 3,
     "pass_rate": 0.5,
-    "avg_latency_ms": 250.0,
-    "p95_latency_ms": 300,
-    "login_redirect_rate": 0.25,
+    "avg_latency_ms": 200.0,
+    "p95_latency_ms": 200,
+    "login_redirect_rate": 0.1667,
     "crash_rate": 0.5,
-    "auth_401_rate": 0.25,
+    "auth_401_rate": 0.3333,
     "cases_with_test_evidence": 1,
-    "cases_missing_test_evidence": 3,
+    "cases_missing_test_evidence": 5,
     "test_evidence_gate_passed": false
   },
   "cost_breakdown": {
-    "total_tokens": 6000,
+    "total_tokens": 5700,
     "by_role": {
-      "coder": 6000
+      "fixer": 2400,
+      "coder": 3000,
+      "chat": 300
     },
     "budget_daily": 50000,
-    "remaining_tokens": 44000,
-    "usage_pct": 12.0
+    "remaining_tokens": 44300,
+    "usage_pct": 11.4
   }
 }
