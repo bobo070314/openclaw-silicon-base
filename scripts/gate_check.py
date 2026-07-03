@@ -34,6 +34,7 @@ class GateKeeper:
     def check_gate(self) -> bool:
         summary = self.eval_report.get("summary", {})
         qg = self.guardrails.get("quality_gates", {})
+        require_test_evidence = os.environ.get("REQUIRE_TEST_EVIDENCE", "1") == "1"
 
         checks = [
             ("pass_rate",         summary.get("pass_rate", 0),        ">=", qg.get("min_pass_rate", 0.88)),
@@ -42,9 +43,30 @@ class GateKeeper:
             ("p95_latency_ms",    summary.get("p95_latency_ms", 99999), "<=", qg.get("max_latency_p95_ms", 9000)),
         ]
 
+        # Test evidence gate
+        missing = summary.get("cases_missing_test_evidence", 0)
+        evidence_passed = summary.get("test_evidence_gate_passed", False)
+        if require_test_evidence and missing > 0:
+            checks.append((
+                "test_evidence_gate",
+                0 if evidence_passed else 1,
+                "==",
+                0
+            ))
+
         all_passed = True
         print("\n=== 🛡️ 门禁检查 ===")
         for name, value, op, threshold in checks:
+            if name == "test_evidence_gate":
+                passed = evidence_passed
+                status = "✅ PASS" if passed else "❌ FAIL"
+                print(f"  {status} | {name}: {missing} cases missing (要求: 0)")
+                if not passed:
+                    print("       FAIL: missing test evidence")
+                if not passed:
+                    all_passed = False
+                continue
+
             passed = (value >= threshold) if op == ">=" else (value <= threshold)
             status = "✅ PASS" if passed else "❌ FAIL"
             print(f"  {status} | {name}: {value:.4f} (阈值 {op} {threshold})")

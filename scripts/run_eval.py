@@ -52,8 +52,12 @@ class Evaluator:
             "latency_sum": 0,
             "latencies": [],
             "login_redirect_count": 0,
-            "401_count": 0
+            "401_count": 0,
+            "cases_with_test_evidence": 0,
+            "cases_missing_test_evidence": 0
         }
+
+        require_test_evidence = os.environ.get("REQUIRE_TEST_EVIDENCE", "1") == "1"
 
         for case in hardcases:
             metrics["total_cases"] += 1
@@ -64,12 +68,26 @@ class Evaluator:
             if result["login_redirect"]:
                 metrics["login_redirect_count"] += 1
 
+            # 检查测试证据
+            expected = case.get("expected", {})
+            must_include = expected.get("must_include", [])
+            has_test_evidence = (
+                "测试结果" in str(must_include)
+                or "通过/失败" in str(must_include)
+                or "回滚点" in str(must_include)
+            )
+
             if result["passed"]:
                 metrics["passed_cases"] += 1
                 metrics["latency_sum"] += result["latency"]
                 metrics["latencies"].append(result["latency"])
             else:
                 metrics["failed_cases"] += 1
+
+            if has_test_evidence:
+                metrics["cases_with_test_evidence"] += 1
+            else:
+                metrics["cases_missing_test_evidence"] += 1
 
         total = metrics["total_cases"]
         pass_rate = metrics["passed_cases"] / total if total > 0 else 0
@@ -79,6 +97,9 @@ class Evaluator:
         login_redirect_rate = metrics["login_redirect_count"] / total if total > 0 else 0
         crash_rate = metrics["failed_cases"] / total if total > 0 else 0
         auth_401_rate = metrics["401_count"] / total if total > 0 else 0
+        require_test_evidence = os.environ.get("REQUIRE_TEST_EVIDENCE", "1") == "1"
+        missing_test_evidence = metrics["cases_missing_test_evidence"]
+        has_test_evidence_gate = missing_test_evidence == 0 if require_test_evidence else True
 
         return {
             "run_id": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -92,7 +113,10 @@ class Evaluator:
                 "p95_latency_ms": round(p95, 2),
                 "login_redirect_rate": round(login_redirect_rate, 4),
                 "crash_rate": round(crash_rate, 4),
-                "auth_401_rate": round(auth_401_rate, 4)
+                "auth_401_rate": round(auth_401_rate, 4),
+                "cases_with_test_evidence": metrics["cases_with_test_evidence"],
+                "cases_missing_test_evidence": metrics["cases_missing_test_evidence"],
+                "test_evidence_gate_passed": has_test_evidence_gate
             }
         }
 
