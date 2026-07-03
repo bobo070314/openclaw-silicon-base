@@ -14,7 +14,8 @@ from typing import Dict, Any
 class MockAgent:
     """模拟 Agent 行为，支持不同 hardcase 场景的错误注入"""
 
-    def __init__(self):
+    def __init__(self, provider: str = "mock"):
+        self.provider = provider
         self.scenario_errors = {
             "HC-401-001": {"rate": 1.0, "error": "401", "latency": 500},
             "HC-401-002": {"rate": 0.8, "error": "401", "latency": 300},
@@ -23,7 +24,27 @@ class MockAgent:
         }
 
     def handle_request(self, hardcase: Dict[str, Any]) -> Dict[str, Any]:
-        """模拟 Agent 处理一条 hardcase 请求"""
+        """模拟 Agent 处理一条 hardcase 请求
+        如果 provider=real，尝试真实 API，失败降级到 mock
+        """
+        # 如果是真实模式，路由到 RealAgentClient
+        if self.provider == "real":
+            try:
+                from real_agent_client import RealAgentClient
+                # 只初始化一次，用 lazy import 避免循环依赖
+                if not hasattr(self, '_real_client'):
+                    self._real_client = RealAgentClient(provider="real")
+                return self._real_client.handle_request(hardcase)
+            except Exception as e:
+                # 如果 RealAgentClient 本身初始化失败，降级到 mock
+                result = self._mock_handle(hardcase)
+                result["fallback_reason"] = f"real_agent_init_failed: {e}"
+                result["provider"] = "mock_fallback"
+                return result
+        return self._mock_handle(hardcase)
+
+    def _mock_handle(self, hardcase: Dict[str, Any]) -> Dict[str, Any]:
+        """纯模拟处理（原有逻辑）"""
         hc_id = hardcase.get("id", "unknown")
         scenario = self.scenario_errors.get(hc_id, self.scenario_errors["default"])
 
