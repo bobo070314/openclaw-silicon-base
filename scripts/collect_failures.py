@@ -7,7 +7,13 @@ import json
 from datetime import datetime
 
 # ===== 配置 =====
-LOG_PATH = os.path.expandvars(r"%USERPROFILE%\.openclaw\logs\gateway.log")
+LOG_PATH = os.environ.get(
+    "OPENCLAW_LOG_PATH",
+    os.path.join(os.path.dirname(__file__), "..", "logs", "gateway.log")
+)
+if not LOG_PATH:
+    LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "logs", "gateway.log")
+LOG_PATH = os.path.expandvars(LOG_PATH)
 HARDCASES_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "evalset", "hardcases.jsonl")
 ERROR_KEYWORDS = [
     r"unauthorized",
