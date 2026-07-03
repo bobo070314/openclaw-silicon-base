@@ -78,6 +78,21 @@ if ($anyFailed) {
         -Trigger "pipeline gate FAIL (perm=$permPassed, gate=$gatePassed)" `
         -ConfigBackup $backupPath `
         -Violations $violationsStr
+    # PR comment (only on failure)
+    $prNumber = $env:PR_NUMBER
+    if ($prNumber) {
+        Write-Host ""
+        Write-Host "[BONUS] Posting PR comment..."
+        python "$PSScriptRoot\comment_on_pr.py" --pr $prNumber
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host " -> PR comment posted"
+        } else {
+            Write-Warning " -> PR comment failed (exit $LASTEXITCODE)"
+        }
+    } else {
+        Write-Host ""
+        Write-Host "[BONUS] No PR_NUMBER set, skipping PR comment"
+    }
 } else {
     Write-Host "AUTO_ROLLBACK: SKIPPED (all gates passed)"
     & "$PSScriptRoot\notify.ps1" -ReportPath "" -Mode skip
