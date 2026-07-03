@@ -1,0 +1,15 @@
+{
+  "run_id": "2026-07-03T21:06:09Z",
+  "suite": "hardcases",
+  "summary": {
+    "total_cases": 3,
+    "passed_cases": 0,
+    "failed_cases": 3,
+    "pass_rate": 0.0,
+    "avg_latency_ms": 0,
+    "p95_latency_ms": 0,
+    "login_redirect_rate": 0.3333,
+    "crash_rate": 1.0,
+    "auth_401_rate": 0.6667
+  }
+}

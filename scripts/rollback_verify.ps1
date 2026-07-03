@@ -1,4 +1,4 @@
-# rollback_verify.ps1 - 验证回滚是否生效
+#requires -version 5.1
 param(
     [string]$ConfigFile = "D:\bobo\openclaw-foreign\openclaw-minimal.json",
     [string]$BackupFile = ""
@@ -6,52 +6,52 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=== 验证回滚 ==="
+Write-Host "=== Rollback Verification ==="
 
-# 1. 检查备份文件是否存在
-$BACKUP_DIR = Join-Path $PSScriptRoot ".." "data" "backups"
+# 1. check backup
+$BACKUP_DIR = "D:\bobo\openclaw-foreign\workspace\openclaw-self-evolve\data\backups"
 if ([string]::IsNullOrEmpty($BackupFile)) {
     $latestBackup = Get-ChildItem -Path $BACKUP_DIR -Filter "openclaw-minimal.json.*.bak" `
         | Sort-Object LastWriteTime -Descending `
         | Select-Object -First 1
 
     if (-not $latestBackup) {
-        Write-Warning "[rollback_verify] 没有找到备份文件，跳过"
+        Write-Warning "[verify] no backup found, skip"
         exit 0
     }
     $BackupFile = $latestBackup.FullName
 }
 
-Write-Host "[verify] 备份文件: $BackupFile"
+Write-Host "[verify] backup: $BackupFile"
 
-# 2. 验证备份文件不是空文件
+# 2. verify backup is not empty
 $backupContent = Get-Content $BackupFile -Raw
 if ([string]::IsNullOrWhiteSpace($backupContent)) {
-    Write-Error "[rollback_verify] 备份文件为空！"
+    Write-Error "[verify] backup file is empty!"
     exit 1
 }
-Write-Host "[verify] 备份文件内容有效 ✅"
+Write-Host "[verify] backup content valid OK"
 
-# 3. 验证备份文件是合法的 JSON
+# 3. verify backup is valid JSON
 try {
     $json = $backupContent | ConvertFrom-Json
-    Write-Host "[verify] 备份文件是合法 JSON ✅"
+    Write-Host "[verify] backup is valid JSON OK"
 } catch {
-    Write-Error "[rollback_verify] 备份文件不是合法 JSON: $_"
+    Write-Error "[verify] backup is not valid JSON: $_"
     exit 1
 }
 
-# 4. 模拟恢复（实际不执行，防止打断在线会话）
-Write-Host "[verify] 模拟恢复: Copy-Item $BackupFile -> $ConfigFile"
-Write-Host "[verify] 恢复命令可用 ✅"
+# 4. simulate restore (don't actually run, avoid bumping online session)
+Write-Host "[verify] simulate restore: Copy-Item $BackupFile -> $ConfigFile"
+Write-Host "[verify] restore command OK"
 
-# 5. 验证恢复后配置可被读取
+# 5. verify current config is readable
 try {
     $currentConfig = Get-Content $ConfigFile -Raw | ConvertFrom-Json
-    Write-Host "[verify] 当前配置可正常读取 ✅"
+    Write-Host "[verify] current config is readable OK"
 } catch {
-    Write-Error "[rollback_verify] 当前配置读取失败: $_"
+    Write-Error "[verify] current config read failed: $_"
     exit 1
 }
 
-Write-Host "[rollback_verify] 回滚验证全部通过 ✅"
+Write-Host "[verify] all rollback checks passed OK"
