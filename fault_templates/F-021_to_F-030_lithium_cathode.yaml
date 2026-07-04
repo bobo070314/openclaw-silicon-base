@@ -1,0 +1,129 @@
+# F-021 ~ F-030 — 锂电正极材料专用故障模板 (v4.0)
+# 覆盖：烧结/浆料配比/辊压断带/涂布/极片分切等工序
+# 设计原则：
+#   - 不修改 apply_repair.py 修复逻辑
+#   - 仅扩展故障描述与可观测信号
+#   - S1/S2/S3 策略复用 v2.0 引擎推理
+
+templates:
+
+  - fault_id: F-021
+    name: sintering_temp_exceeded
+    category: process_anomaly
+    severity: P1
+    description: 正极材料烧结温度超上限，可能导致晶粒异常长大
+    signals:
+      - temperature > 980°C
+      - duration > 30min
+      - zone: maximum_density_zone
+    affects: [cathode_batch, crystal_grain_size]
+    repair_strategy: S1  # 生成补烧曲线调整配方
+
+  - fault_id: F-022
+    name: sintering_hold_time_insufficient
+    category: process_anomaly
+    severity: P2
+    description: 正极材料烧结保温时间不足，材料结晶度不达标
+    signals:
+      - hold_time < 12h
+      - temperature_profile: ramp_down_too_early
+      - zone: soak_zone
+    affects: [cathode_batch, crystallinity]
+    repair_strategy: S1  # 延长保温参数的模板配置
+
+  - fault_id: F-023
+    name: slurry_viscosity_deviation
+    category: material_quality
+    severity: P2
+    description: 正极浆料粘度超出工艺窗口，影响涂布均匀性
+    signals:
+      - viscosity < 3000 mPa·s OR viscosity > 8000 mPa·s
+      - solids_content > 72%
+      - agglomerate_size > 50 μm
+    affects: [coating_uniformity, electrode_density]
+    repair_strategy: S1  # 调整固含量/分散参数
+
+  - fault_id: F-024
+    name: ncm_cation_mixing_ratio_off
+    category: material_quality
+    severity: P1
+    description: NCM 三元材料阳离子混排比例超标，容量衰减加速
+    signals:
+      - Li/Ni_mixing_ratio > 5%
+      - XRD_003/104_peak_ratio < 1.2
+      - batch: same_precursor_lot
+    affects: [battery_capacity, cycle_life]
+    repair_strategy: S2  # 调整烧结气氛/锂量配比（需人工复核参数）
+
+  - fault_id: F-025
+    name: roll_press_burst
+    category: equipment_fault
+    severity: P1
+    description: 辊压断带 — 极片在辊压工序断裂，导致产线停机
+    signals:
+      - tension > 500 N
+      - electrode_density > 3.8 g/cm³
+      - elongation_break < 2%
+      - line_status: emergency_stop
+    affects: [production_line, electrode_roll]
+    repair_strategy: S3  # RBAC 权限恢复 / 需产线主管干预
+
+  - fault_id: F-026
+    name: coating_edge_thickening
+    category: process_anomaly
+    severity: P2
+    description: 涂布边缘增厚 — 极片边缘涂层厚度超标 >15%
+    signals:
+      - edge_thickness_center_ratio > 1.15
+      - coating_speed > 25 m/min
+      - slot_die_gap: uneven
+    affects: [coating_uniformity, electrode_geometry]
+    repair_strategy: S1  # 调整模头间隙/涂布速度
+
+  - fault_id: F-027
+    name: electrode_slitting_burr
+    category: equipment_fault
+    severity: P2
+    description: 极片分切毛刺超标，可能刺穿隔膜导致短路
+    signals:
+      - burr_height > 20 μm
+      - slitting_blade: worn > 5000 m
+      - edge_defect_rate > 3%
+    affects: [electrode_edge, cell_safety]
+    repair_strategy: S1  # 更换刀片参数模板 / 降速运行
+
+  - fault_id: F-028
+    name: solvent_recovery_pressure_drop
+    category: equipment_fault
+    severity: P2
+    description: 溶剂回收系统压降异常，影响 NMP 回收效率
+    signals:
+      - condenser_pressure_drop > 50 kPa
+      - NMP_recovery_rate < 95%
+      - exhaust_temp > 80°C
+    affects: [solvent_recovery, environmental_compliance]
+    repair_strategy: S1  # 清理冷凝器 / 调整风机频率模板
+
+  - fault_id: F-029
+    name: lithium_iron_phosphate_impurity
+    category: material_quality
+    severity: P2
+    description: 磷酸铁锂正极材料铁杂质超标，自放电增大
+    signals:
+      - Fe_content > 50 ppm
+      - magnetic_foreign_matter > 0.5 mg/kg
+      - batch_conductivity < 3 S/cm
+    affects: [cell_self_discharge, safety_test]
+    repair_strategy: S2  # 增加除磁工序 / 更换原料批次（需质量确认）
+
+  - fault_id: F-030
+    name: cathode_drying_oven_temp_gradient
+    category: process_anomaly
+    severity: P3
+    description: 正极极片烘箱温度梯度异常，粘结剂分布不均
+    signals:
+      - temp_gradient > 15°C across_oven
+      - moisture_content > 500 ppm
+      - binder_migration: detected by SEM
+    affects: [electrode_adhesion, cycle_performance]
+    repair_strategy: S1  # 调整烘箱分区温度模板
