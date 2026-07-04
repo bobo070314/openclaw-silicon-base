@@ -1,0 +1,177 @@
+# v2.0 Fault Templates — 通用故障类型枚举
+
+# ── F-005: 磁盘空间不足 ──
+fault_type: disk_full
+description: 日志/数据分区磁盘空间超过阈值
+severity: P1
+source: filesystem_monitor
+parameters:
+  mount_point: /data
+  usage_percent: 95
+  threshold: 85
+repair_strategy: S2
+
+# ── F-006: 网络超时 ──
+fault_type: network_timeout
+description: MES API 请求超时
+severity: P2
+source: mes_outbound_proxy
+parameters:
+  endpoint: /api/v1/repair_status
+  timeout_ms: 15000
+  threshold_ms: 5000
+repair_strategy: S1
+
+# ── F-007: 权限逃逸 ──
+fault_type: permission_escalation
+description: 未授权进程尝试访问 configs/ 目录
+severity: P0
+source: auditd_log
+parameters:
+  pid: 29183
+  target: configs/agent_chain.yaml
+  action: read_attempt
+repair_strategy: S3
+
+# ── F-008: 配置文件损坏 ──
+fault_type: config_corrupt
+description: YAML 配置文件解析失败
+severity: P1
+source: startup_log
+parameters:
+  file: configs/agent_chain.yaml
+  error: mapping_values_not_allowed
+repair_strategy: S2
+
+# ── F-009: 依赖服务离线 ──
+fault_type: dependency_offline
+description: 上游 MCP 服务不可达
+severity: P2
+source: heartbeat_monitor
+parameters:
+  service: metamcp
+  last_seen_seconds: 120
+  expected_port: 12008
+repair_strategy: S1
+
+# ── F-010: 内存泄漏警告 ──
+fault_type: memory_leak_warning
+description: 进程内存使用持续增长超过基线
+severity: P2
+source: process_monitor
+parameters:
+  pid: 17384
+  rss_mb: 850
+  baseline_mb: 400
+  growth_rate_mb_per_hour: 45
+repair_strategy: S2
+
+# ── F-011: 证书即将过期 ──
+fault_type: cert_expiry_warning
+description: SSL/TLS 证书有效期不足 7 天
+severity: P2
+source: cert_monitor
+parameters:
+  cert_path: configs/tls/cert.pem
+  days_remaining: 5
+  threshold_days: 7
+repair_strategy: S1
+
+# ── F-012: 数据目录权限漂移 ──
+fault_type: data_dir_perms
+description: data/ 目录被意外修改为 777
+severity: P1
+source: filesystem_audit
+parameters:
+  directory: data/runs
+  expected_mode: 0755
+  actual_mode: 0777
+repair_strategy: S3
+
+# ── F-013: 级联故障信号 ──
+fault_type: cascade_signal
+description: 同一时间窗口出现 ≥3 种故障类型
+severity: P0
+source: correlation_engine
+parameters:
+  window_seconds: 300
+  fault_count: 3
+  types: [disk_full, network_timeout, dependency_offline]
+repair_strategy: S2
+
+# ── F-014: 温度告警（硅基体扩展） ──
+fault_type: temperature_anomaly
+description: 退火炉温区温差超过安全阈值
+severity: P1
+source: scada_temp_log
+parameters:
+  zone: annealing_zone_02
+  drift_celsius: 4.2
+  threshold_celsius: 3.0
+repair_strategy: S1
+
+# ── F-015: 日志轮转失败 ──
+fault_type: log_rotation_failure
+description: 日志文件未按时轮转，单文件过大
+severity: P3
+source: log_manager
+parameters:
+  log_file: logs/monitor.log
+  size_mb: 512
+  threshold_mb: 100
+repair_strategy: S2
+
+# ── F-016: MCP 协议版本不匹配 ──
+fault_type: protocol_version_mismatch
+description: 客户端与服务器 MCP 协议版本不一致
+severity: P2
+source: handshake_log
+parameters:
+  client_version: 1.0
+  server_version: 0.9
+repair_strategy: S1
+
+# ── F-017: 数据库连接池耗尽 ──
+fault_type: connection_pool_exhausted
+description: 数据库连接池无可用连接
+severity: P1
+source: db_monitor
+parameters:
+  pool_name: eval_db
+  active: 50
+  max: 50
+  waiters: 3
+repair_strategy: S2
+
+# ── F-018: 任务队列积压 ──
+fault_type: task_queue_backlog
+description: 修复任务队列积压超过阈值
+severity: P2
+source: queue_monitor
+parameters:
+  queue_name: repair_pipeline
+  backlog: 25
+  threshold: 10
+repair_strategy: S1
+
+# ── F-019: 速率限制告警 ──
+fault_type: rate_limit_hit
+description: MES API 调用频率超过限制
+severity: P3
+source: api_gateway
+parameters:
+  endpoint: /api/v1/inject
+  calls_per_minute: 102
+  limit_per_minute: 100
+repair_strategy: S2
+
+# ── F-020: 观察窗超时 ──
+fault_type: observation_window_expired
+description: 24h 观察窗无新数据注入，系统进入静默模式
+severity: P3
+source: daemon_scheduler
+parameters:
+  window_hours: 24
+  last_injection_hours: 24
+  expected_state: active
+repair_strategy: S1
