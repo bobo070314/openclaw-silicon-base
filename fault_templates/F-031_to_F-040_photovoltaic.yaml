@@ -1,0 +1,138 @@
+# F-031 ~ F-040 — 光伏电池/组件专用故障模板 (v4.0)
+# 覆盖：电池片隐裂/焊带偏移/EL测试异常/层压/IV测试等工序
+# 设计原则：
+#   - 不修改 apply_repair.py 修复逻辑
+#   - 仅扩展故障描述与可观测信号
+#   - S1/S2/S3 策略复用 v2.0 引擎推理
+
+templates:
+
+  - fault_id: F-031
+    name: cell_micro_crack
+    category: quality_defect
+    severity: P2
+    description: 电池片隐裂 — EL 测试显示微裂纹，可能导致功率衰减
+    signals:
+      - EL_test: micro_crack_detected
+      - crack_length > 5mm
+      - affected_cells > 3_per_module
+      - electroluminescence_intensity_drop > 10%
+    affects: [module_power, long_term_reliability]
+    repair_strategy: S2  # 需要质检主管判定是否降级使用/返修
+
+  - fault_id: F-032
+    name: ribbon_offset
+    category: process_anomaly
+    severity: P2
+    description: 焊带偏移 — 串焊工序焊带偏离主栅线中心
+    signals:
+      - ribbon_offset > 0.3mm
+      - soldering_temp < 220°C
+      - pull_force < 3N
+      - busbar_alignment: misaligned
+    affects: [solder_joint, series_resistance]
+    repair_strategy: S1  # 调整串焊机视觉定位参数
+
+  - fault_id: F-033
+    name: el_dark_star_cluster
+    category: quality_defect
+    severity: P1
+    description: EL 暗星团 — 电池片局部区域 EL 发光异常
+    signals:
+      - dark_star_area > 2% of cell
+      - cluster_density > 5_per_cell
+      - IV_power_loss > 3%
+      - affected_position: multiple
+    affects: [module_power, warranty_claim_risk]
+    repair_strategy: S3  # 权限升级 + 需产线主管介入判定批次是否报废
+
+  - fault_id: F-034
+    name: lamination_void
+    category: process_anomaly
+    severity: P2
+    description: 层压气泡/空洞 — EVA 胶膜未完全填充
+    signals:
+      - void_diameter > 2mm
+      - void_count > 5_per_module
+      - laminator_vacuum < 95%
+      - lamination_temp < 145°C
+    affects: [encapsulation, moisture_ingress]
+    repair_strategy: S1  # 调整层压参数（温度/真空度/时间）
+
+  - fault_id: F-035
+    name: iv_ff_degradation
+    category: quality_defect
+    severity: P2
+    description: IV 测试填充因子异常下降 — 可能电池片内部缺陷
+    signals:
+      - FF < 75%
+      - Rs > 5 mΩ
+      - Rsh < 200 Ω
+      - Voc_drop > 2%
+    affects: [module_efficiency, binning_grade]
+    repair_strategy: S2  # 需要质量部门确认分档降级
+
+  - fault_id: F-036
+    name: glass_breakage_during_layup
+    category: equipment_fault
+    severity: P1
+    description: 叠层工序玻璃破裂 — 导致产线紧急停机
+    signals:
+      - glass_crack: detected_by_vision
+      - line_status: emergency_stop
+      - debris_on_layup_table
+      - operator_intervention: required
+    affects: [production_line, material_waste]
+    repair_strategy: S3  # 权限恢复 + 紧急停机流程（需产线主管现场介入）
+
+  - fault_id: F-037
+    name: junction_box_adhesion_fail
+    category: quality_defect
+    severity: P3
+    description: 接线盒粘接拉力不达标
+    signals:
+      - peel_force < 40N
+      - potting_ratio < 90%
+      - curing_time < 6h
+      - ambient_humidity > 70%
+    affects: [junction_box, field_reliability]
+    repair_strategy: S1  # 调整固化参数 / 增加保压时间模板
+
+  - fault_id: F-038
+    name: bypass_diode_overheat
+    category: equipment_fault
+    severity: P2
+    description: 旁路二极管过热 — 可能导致热斑
+    signals:
+      - diode_temp > 120°C
+      - thermal_image: hotspot_detected
+      - reverse_current > 1A
+      - string_current_mismatch > 5%
+    affects: [module_safety, bypass_diode_life]
+    repair_strategy: S2  # 需要电气工程师确认更换
+
+  - fault_id: F-039
+    name: frame_corrosion_precursor
+    category: material_quality
+    severity: P3
+    description: 铝边框阳极氧化层异常 — 腐蚀前兆
+    signals:
+      - oxidation_layer_thickness < 10 μm
+      - salt_spray_test: borderline
+      - frame_surface: pitting_visible
+      - batch_sealant: insufficient
+    affects: [frame_integrity, corrosion_resistance]
+    repair_strategy: S1  # 增加密封胶模板 / 涂覆保护层工艺参数
+
+  - fault_id: F-040
+    name: string_current_reversal
+    category: process_anomaly
+    severity: P1
+    description: 组件端电流反接 — 接线极性错误
+    signals:
+      - IV_curve: reverse_polarity
+      - diode_forward_voltage_drop: abnormal
+      - connector_mating: cross_connected
+      - assembly_station: manual_wiring_area
+    affects: [module_function, safety_risk]
+    repair_strategy: S3  # 权限升级 + 需要质检主管确认返工
