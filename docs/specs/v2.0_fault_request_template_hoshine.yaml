@@ -1,0 +1,45 @@
+# v2.0 故障请求模板 — 合盛硅业 (Hoshine Silicon) 专属扩展
+# 对接 MES 时直接映射参数，不改 PLC/SCADA
+
+# ── 硅基负极端面裂纹 ──
+fault_type: electrode_crack
+description: 硅基负极端面裂纹（合盛产线 common）
+severity: P1
+source: mes_alarm_topic_v3
+parameters:
+  crack_depth_mm: 0.12          # 合盛MES直接提供的参数
+  crack_width_um: 8.5           # 微米级精度
+  location: anode_coater_03     # 产线工位
+  batch_id: "HS-20260704-B12"
+  detection_method: laser_scan  # 激光扫描检测
+repair_strategy: S1             # 自动匹配S1修复逻辑（模板文件生成）
+
+# ── 硅料污染 ──
+fault_type: contamination
+description: 硅料金属离子污染（Fe/Ni 超标）
+severity: P2
+source: lab_report_interface
+parameters:
+  contamination_ppm: 850          # 超标浓度
+  element: Fe                     # 污染元素
+  source_trace: raw_material_lot_07
+  detection_method: icp_ms        # 电感耦合等离子体质谱
+repair_strategy: S2               # 自动匹配S2修复逻辑（配置重生成）
+
+# ── 退火炉温控漂移 ──
+fault_type: temperature_drift
+description: 退火炉温区温差超标
+severity: P2
+source: scada_temp_log
+parameters:
+  drift_celsius: 4.2              # 漂移量
+  zone: annealing_zone_02
+  setpoint: 850
+  actual: 854.2
+repair_strategy: S3               # 自动匹配S3修复逻辑（权限/配置修复）
+
+# ── 对接说明 ──
+# 1. 工程师复制此文件到 `mes_inbound/` 目录
+# 2. 修改 `parameters` 下具体数值
+# 3. 提交后 daemon 自动识别并触发修复
+# 4. 无需修改 PLC 逻辑或 SCADA 配置
