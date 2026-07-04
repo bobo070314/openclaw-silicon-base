@@ -12,9 +12,13 @@ mes_adapter.py — MES 模拟对接适配器 (v2.0)
 
 import json
 import sys
+import os
 import argparse
 from pathlib import Path
 from datetime import datetime, timezone
+
+# v8.0: 并行调度 Gate
+USE_V8_STRATEGIES = os.getenv("USE_V8_STRATEGIES", "false").lower() == "true"
 
 # Path setup
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -59,7 +63,34 @@ def simulate_mes_post(fault_type: str, params: dict | None = None) -> dict:
             "ts": datetime.now(timezone.utc).isoformat(),
         }
 
-    # 路由到修复引擎
+    # v8.0: 并行调度路径
+    if USE_V8_STRATEGIES:
+        try:
+            from src.scheduler.parallel import run_parallel_repair
+            pr = run_parallel_repair(fault_type)
+            result = {
+                "status": "routed",
+                "fault_type": fault_type,
+                "strategy": pr.get("strategy", "unknown"),
+                "params": params or {},
+                "routed_to": "parallel_scheduler",
+                "success": pr.get("success", False),
+                "detail": pr.get("detail", ""),
+                "ts": datetime.now(timezone.utc).isoformat(),
+            }
+            _log_repair(result)
+            return result
+        except Exception as e:
+            result = {
+                "status": "parallel_fallback",
+                "fault_type": fault_type,
+                "reason": f"Parallel scheduler failed: {e}, falling back to serial",
+                "ts": datetime.now(timezone.utc).isoformat(),
+            }
+            _log_repair(result)
+            # fall through to serial path
+
+    # 旧路径：路由到修复引擎
     result = {
         "status": "routed",
         "fault_type": fault_type,
