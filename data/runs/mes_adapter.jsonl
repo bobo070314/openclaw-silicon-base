@@ -1,0 +1,2 @@
+{"status": "routed", "fault_type": "disk_full", "strategy": "S2", "params": {}, "routed_to": "auto_fixer.apply_repair", "ts": "2026-07-04T08:21:36.173379+00:00"}
+{"status": "routed", "fault_type": "disk_full", "strategy": "S2", "params": {"mount_point": "/data", "usage_percent": 95}, "routed_to": "auto_fixer.apply_repair", "ts": "2026-07-04T08:21:41.213532+00:00"}
