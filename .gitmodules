@@ -1,0 +1,3 @@
+[submodule "external/headroom"]
+	path = external/headroom
+	url = https://github.com/headroomlabs-ai/headroom.git
