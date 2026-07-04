@@ -17,7 +17,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 # Path setup
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TEMPLATES_DIR = ROOT / "fault_templates"
 INBOUND_DIR = ROOT / "mes_inbound"
 REPAIR_LOG = ROOT / "data" / "runs" / "mes_adapter.jsonl"
