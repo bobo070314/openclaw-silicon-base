@@ -1,0 +1,149 @@
+# F-041 ~ F-050 — 储能电池系统专用故障模板 (v9.0)
+# 覆盖：BMS 电压偏差/热管理/SOC 漂移/绝缘检测/消防联动等
+# 设计原则：
+#   - 不修改 apply_repair.py 修复逻辑
+#   - S1/S2/S3 策略复用 v2.0 引擎推理
+#   - 使用 v6.0 标准协议格式（含 industry 字段）
+
+templates:
+
+  - fault_id: F-041
+    name: bms_cell_voltage_deviation
+    industry: energy_storage
+    category: process_anomaly
+    severity: P1
+    description: BMS 检测到电芯电压偏差超 ±50mV，可能导致电池组过早衰减
+    signals:
+      - cell_voltage_delta > 50mV
+      - soc_measurement_discrepancy > 5%
+      - cell_count_affected > 4
+      - balancing_current_limited
+    affects: [battery_pack, soc_accuracy, cycle_life]
+    repair_strategy: S1
+
+  - fault_id: F-042
+    name: thermal_runaway_precursor
+    industry: energy_storage
+    category: process_anomaly
+    severity: P1
+    description: 热失控前兆 — 单体温度异常升高/内短路风险
+    signals:
+      - cell_temp > 60°C
+      - temp_rise_rate > 5°C/min
+      - internal_resistance_drop > 20%
+      - gas_sensor: triggered
+    affects: [battery_module, safety_system, fire_suppression]
+    repair_strategy: S3
+
+  - fault_id: F-043
+    name: soc_drift
+    industry: energy_storage
+    category: quality_defect
+    severity: P2
+    description: SOC 估算漂移 — BMS 累积误差导致充放电不均衡
+    signals:
+      - soc_coulombic_error > 10%
+      - ocv_soc_mismatch > 5%
+      - full_charge_capacity_drop > 8%
+      - cycle_count > 500
+    affects: [bms_accuracy, available_capacity]
+    repair_strategy: S2
+
+  - fault_id: F-044
+    name: insulation_resistance_drop
+    industry: energy_storage
+    category: quality_defect
+    severity: P1
+    description: 绝缘电阻下降 — 可能电解质泄漏或绝缘老化
+    signals:
+      - insulation_resistance < 1 MΩ
+      - leakage_current > 10 mA
+      - humidity: "85% plus"
+      - enclosure_temp: elevated
+    affects: [battery_enclosure, personnel_safety, grid_isolation]
+    repair_strategy: S3
+
+  - fault_id: F-045
+    name: fan_cooling_failure
+    industry: energy_storage
+    category: equipment_fault
+    severity: P2
+    description: 冷却风扇故障 — 电池柜温升加速
+    signals:
+      - fan_speed < 50% rated
+      - cabinet_temp_rise > 10°C in 30min
+      - fan_current_draw: 0.2A (abnormal)
+      - ambient_temp > 35°C
+    affects: [thermal_management, battery_module, cabinet]
+    repair_strategy: S1
+
+  - fault_id: F-046
+    name: bms_communication_timeout
+    industry: energy_storage
+    category: equipment_fault
+    severity: P2
+    description: BMS 通信超时 — 电池簇与主控失去联系
+    signals:
+      - bms_ping_timeout > 5s
+      - can_bus_error_rate > 10%
+      - slave_bms: offline
+      - module_address: unresponsive
+    affects: [bms_network, system_control, monitoring]
+    repair_strategy: S1
+
+  - fault_id: F-047
+    name: cell_balancing_overcurrent
+    industry: energy_storage
+    category: process_anomaly
+    severity: P2
+    description: 均衡电流过大 — 被动均衡电阻过热
+    signals:
+      - balancing_current > 200 mA
+      - bleeder_resistor_temp > 85°C
+      - balancing_duty_cycle > 80%
+      - cell_voltage_spread: increasing
+    affects: [bms_balancing, cell_health, energy_efficiency]
+    repair_strategy: S1
+
+  - fault_id: F-048
+    name: contactor_weld_detection
+    industry: energy_storage
+    category: quality_defect
+    severity: P1
+    description: 直流接触器粘连 — 断开后仍检测到电压
+    signals:
+      - contactor_state: open
+      - post_contact_voltage > 10V
+      - coil_current: abnormal_low
+      - arc_detection: positive
+    affects: [power_contactor, safety_disconnect, dc_bus]
+    repair_strategy: S3
+
+  - fault_id: F-049
+    name: soh_degradation_alarm
+    industry: energy_storage
+    category: quality_defect
+    severity: P3
+    description: SOH 衰退预警 — 电池健康度低于 70%
+    signals:
+      - soh < 70%
+      - capacity_fade_rate > 0.1% per cycle
+      - dcir_increase > 30%
+      - calendar_aging: "> 5 years"
+    affects: [battery_lifetime, replacement_planning, warranty]
+    repair_strategy: S2
+
+  - fault_id: F-050
+    name: fire_suppression_false_alarm
+    industry: energy_storage
+    category: process_anomaly
+    severity: P3
+    description: 消防系统误报警 — 未发生真实热事件
+    signals:
+      - smoke_detector: triggered
+      - gas_sensor: negative
+      - cell_temp: normal_ambient
+      - visual_inspection: no_event
+      - alarm_history: false_positive in last 7 days
+    affects: [fire_suppression, operation_downtime, insurance]
+    repair_strategy: S2

@@ -22,6 +22,8 @@ logger = logging.getLogger("headroom_adapter")
 
 # 环境变量开关
 ENABLED = os.getenv("USE_HEADROOM", "false").lower() == "true"
+# v9.0: Headroom MCP Server 模式开关
+MCP_ENABLED = os.getenv("USE_HEADROOM_MCP", "false").lower() == "true"
 
 
 class HeadroomAdapter:
@@ -82,6 +84,14 @@ class HeadroomAdapter:
     @property
     def enabled(self) -> bool:
         return ENABLED and self._compressor is not None
+
+    @property
+    def mcp_enabled(self) -> bool:
+        """Headroom MCP Server 模式是否启用。
+        需同时设置 USE_HEADROOM_MCP=true 和 USE_HEADROOM=true。
+        实际 MCP Server 启动需 API Key，这是适配层信号。
+        """
+        return MCP_ENABLED and self.enabled
 
 
 # 单例
